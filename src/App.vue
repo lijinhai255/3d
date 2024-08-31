@@ -1,16 +1,13 @@
 <template>
-  <Scene />
-  <!-- <HelloWorld msg="Welcome to Your Vue.js App" /> -->
+  <HelloWorld msg="Welcome to Your Vue.js App" />
 </template>
 
 <script>
-// import HelloWorld from "./components/HelloWorld.vue";
-import Scene from "./components/Scene.vue";
+import HelloWorld from "./components/HelloWorld.vue";
 export default {
   name: "App",
   components: {
-    // HelloWorld,
-    Scene,
+    HelloWorld,
   },
 };
 </script>
