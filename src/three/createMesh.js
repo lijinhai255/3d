@@ -1,5 +1,12 @@
-import createCity from "./mesh/City";
+import City from "./mesh/City";
+import scene from "./scene";
 
+let city;
 export default function createMesh() {
-  createCity();
+  // 创建城市
+  city = new City(scene);
+}
+
+export function updateMesh(time) {
+  city.update(time);
 }
