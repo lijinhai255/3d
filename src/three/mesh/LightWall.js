@@ -8,10 +8,16 @@ export default class LightWall {
     radius = 5,
     length = 2,
     position = { x: 0, z: 0 },
-    color = 0xff0000
+    color = 0x00ff00
   ) {
-    console.log(color, "color-color");
-    this.geometry = new THREE.CylinderGeometry(radius, radius, 2, 32, 1, true);
+    this.geometry = new THREE.CylinderBufferGeometry(
+      radius,
+      radius,
+      2,
+      32,
+      1,
+      true
+    );
     this.material = new THREE.ShaderMaterial({
       vertexShader: vertex,
       fragmentShader: fragment,
@@ -20,31 +26,43 @@ export default class LightWall {
     });
 
     this.mesh = new THREE.Mesh(this.geometry, this.material);
-    this.mesh.position.set(position.x, 1, position.z);
-    this.mesh.geometry.computeBoundingBox();
-    //   console.log(mesh.geometry.boundingBox);
 
+    this.mesh.position.set(position.x, 1, position.z);
+    // 必须先调用计算函数
+    this.mesh.geometry.computeBoundingBox();
+
+    // 从上到下的高度获取
     let { min, max } = this.mesh.geometry.boundingBox;
-    //   获取物体的高度差
+
     let uHeight = max.y - min.y;
     this.material.uniforms.uHeight = {
       value: uHeight,
     };
 
-    // 光墙动画
+    this.material.uniforms.uColor = {
+      value: new THREE.Color(color),
+    };
+
+    this.material.uniforms.uTime = {
+      value: 0,
+    };
+
     gsap.to(this.mesh.scale, {
       x: length,
       z: length,
       duration: 1,
+      ease: "none",
       repeat: -1,
       yoyo: true,
     });
   }
 
-  remove() {
-    this.mesh.remove();
+  remove(scene) {
+    // 移除物体
     this.mesh.removeFromParent();
-    this.mesh.geometry.dispose();
-    this.mesh.material.dispose();
+    // 移除材质
+    this.material.dispose();
+    // 移除几何体
+    this.geometry.dispose();
   }
 }

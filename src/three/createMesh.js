@@ -1,6 +1,5 @@
-import City from "./mesh/City";
 import scene from "./scene";
-
+import City from "./mesh/City";
 let city;
 export default function createMesh() {
   // 创建城市

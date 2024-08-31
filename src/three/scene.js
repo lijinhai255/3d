@@ -1,13 +1,14 @@
 import * as THREE from "three";
 import { RGBELoader } from "three/examples/jsm/loaders/RGBELoader.js";
-
-// console.log(THREE);
 // 初始化场景
 const scene = new THREE.Scene();
 
-// // 场景天空盒
-// const textureCubeLoader = new THREE.CubeTextureLoader().setPath("./textures/");
-// const textureCube = textureCubeLoader.load([
+// 添加雾霾
+// const fog = new THREE.Fog(0x000000, 0, 1000);
+// scene.fog = fog;
+
+// const cubeTextureLoader = new THREE.CubeTextureLoader().setPath("./textures/");
+// const texture = cubeTextureLoader.load([
 //   "1.jpg",
 //   "2.jpg",
 //   "3.jpg",
@@ -16,8 +17,6 @@ const scene = new THREE.Scene();
 //   "6.jpg",
 // ]);
 
-// scene.background = textureCube;
-// scene.environment = textureCube;
 // 导入hdr纹理
 const hdrLoader = new RGBELoader();
 hdrLoader.loadAsync("./textures/023.hdr").then((texture) => {

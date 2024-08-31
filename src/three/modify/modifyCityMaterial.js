@@ -1,44 +1,47 @@
 import * as THREE from "three";
 import gsap from "gsap";
+import vertex from "@/shader/gradColor/vertex.glsl";
+import fragment from "@/shader/gradColor/fragment.glsl";
+
 export default function modifyCityMaterial(mesh) {
   mesh.material.onBeforeCompile = (shader) => {
-    // console.log(shader.vertexShader);
-    // console.log(shader.fragmentShader);
     shader.fragmentShader = shader.fragmentShader.replace(
       "#include <dithering_fragment>",
       `
-        #include <dithering_fragment>
-        //#end#
-    `
+          #include <dithering_fragment>
+          // #end#
+          `
     );
+
     addGradColor(shader, mesh);
-    addSpread(shader);
+    // addSpread(shader);
     addLightLine(shader);
     addToTopLine(shader);
   };
 }
 
 export function addGradColor(shader, mesh) {
+  // console.log(mesh);
+  // 传递unfiorm变量
   mesh.geometry.computeBoundingBox();
-  //   console.log(mesh.geometry.boundingBox);
-
   let { min, max } = mesh.geometry.boundingBox;
-  //   获取物体的高度差
+  console.log(min, max);
   let uHeight = max.y - min.y;
-
+  //   console.log(shader.vertexShader);
+  //   console.log(shader.fragmentShader);
+  // shader.fragmentShader = fragment;
+  // shader.vertexShader = vertex;
   shader.uniforms.uTopColor = {
-    value: new THREE.Color("#aaaeff"),
+    value: new THREE.Color("#ffeeff"),
   };
   shader.uniforms.uHeight = {
     value: uHeight,
   };
-
   shader.vertexShader = shader.vertexShader.replace(
     "#include <common>",
-    `
-      #include <common>
-      varying vec3 vPosition;
-      `
+    `#include <common>
+
+      varying vec3 vPosition;`
   );
 
   shader.vertexShader = shader.vertexShader.replace(
@@ -46,73 +49,73 @@ export function addGradColor(shader, mesh) {
     `
       #include <begin_vertex>
       vPosition = position;
-  `
+      `
   );
 
   shader.fragmentShader = shader.fragmentShader.replace(
     "#include <common>",
     `
       #include <common>
-      
+
       uniform vec3 uTopColor;
       uniform float uHeight;
       varying vec3 vPosition;
-
-        `
+      `
   );
+
   shader.fragmentShader = shader.fragmentShader.replace(
-    "//#end#",
+    "// #end#",
     `
-      
-      vec4 distGradColor = gl_FragColor;
-
-      // 设置混合的百分比
-      float gradMix = (vPosition.y+uHeight/2.0)/uHeight;
-      // 计算出混合颜色
-      vec3 gradMixColor = mix(distGradColor.xyz,uTopColor,gradMix);
-      gl_FragColor = vec4(gradMixColor,1);
-        //#end#
-
+        // 目标的基础原色
+        vec3 distColor = outgoingLight;
+        // uTopColor渐变的色
+      // 混合百分
+      float indexMix = (vPosition.y+uHeight/2.0)/uHeight;
+      // 混合颜色
+      distColor = mix(distColor,uTopColor,indexMix);
+        gl_FragColor = vec4(distColor,1);
+        // #end#
       `
   );
 }
-// 添加建筑材质光波扩散特效
-export function addSpread(shader, center = new THREE.Vector2(0, 0)) {
-  // 设置扩散的中心点
-  shader.uniforms.uSpreadCenter = { value: center };
-  //   扩散的时间
-  shader.uniforms.uSpreadTime = { value: -2000 };
-  //   设置条带的宽度
-  shader.uniforms.uSpreadWidth = { value: 40 };
 
+export function addSpread(shader, center = new THREE.Vector2(200, 300)) {
+  shader.uniforms.uSpreadCenter = {
+    value: center,
+  };
+  shader.uniforms.uSpreadWidth = {
+    value: 200,
+  };
+  shader.uniforms.uSpreadTime = {
+    value: 0,
+  };
+  // 将uniform添加至片元着色器
   shader.fragmentShader = shader.fragmentShader.replace(
     "#include <common>",
     `
-      #include <common>
-
-      uniform vec2 uSpreadCenter;
-      uniform float uSpreadTime;
-      uniform float uSpreadWidth;
-      `
-  );
-
-  shader.fragmentShader = shader.fragmentShader.replace(
-    "//#end#",
+    #include <common>
+    uniform vec2 uSpreadCenter;
+    uniform float uSpreadWidth;
+    uniform float uSpreadTime;
     `
-     float spreadRadius = distance(vPosition.xz,uSpreadCenter);
-    //  扩散范围的函数
-    float spreadIndex = -(spreadRadius-uSpreadTime)*(spreadRadius-uSpreadTime)+uSpreadWidth;
+  );
+  shader.fragmentShader = shader.fragmentShader.replace(
+    "// #end#",
+    `
+    float spreadRadius = distance(vPosition.xz,uSpreadCenter);
+
+    float spreadIndex = -((spreadRadius-uSpreadTime)*(spreadRadius-uSpreadTime))+uSpreadWidth;
 
     if(spreadIndex>0.0){
-        gl_FragColor = mix(gl_FragColor,vec4(1,1,1,1),spreadIndex/uSpreadWidth);
+      gl_FragColor = mix(gl_FragColor,vec4(1,1,1,1),spreadIndex/uSpreadWidth);
     }
 
-    //#end#
+    // #end#
     `
   );
 
   gsap.to(shader.uniforms.uSpreadTime, {
-    value: 800,
+    value: 2000,
     duration: 3,
     ease: "none",
     repeat: -1,
@@ -120,77 +123,77 @@ export function addSpread(shader, center = new THREE.Vector2(0, 0)) {
 }
 
 export function addLightLine(shader) {
-  //   扩散的时间
-  shader.uniforms.uLightLineTime = { value: -1500 };
-  //   设置条带的宽度
-  shader.uniforms.uLightLineWidth = { value: 200 };
-
+  shader.uniforms.uLightLineWidth = {
+    value: 200,
+  };
+  shader.uniforms.uLightLineTime = {
+    value: -2000,
+  };
+  // 将uniform添加至片元着色器
   shader.fragmentShader = shader.fragmentShader.replace(
     "#include <common>",
     `
-        #include <common>
-  
-        
-        uniform float uLightLineTime;
-        uniform float uLightLineWidth;
-        `
-  );
-
-  shader.fragmentShader = shader.fragmentShader.replace(
-    "//#end#",
+    #include <common>
+    uniform float uLightLineWidth;
+    uniform float uLightLineTime;
     `
-      float LightLineMix = -(vPosition.x+vPosition.z-uLightLineTime)*(vPosition.x+vPosition.z-uLightLineTime)+uLightLineWidth;
-  
-      if(LightLineMix>0.0){
-          gl_FragColor = mix(gl_FragColor,vec4(0.8,1.0,1.0,1),LightLineMix /uLightLineWidth);
-          
-      }
-  
-      //#end#
-      `
+  );
+  shader.fragmentShader = shader.fragmentShader.replace(
+    "// #end#",
+    `
+    
+
+    float LightLineIndex = -((vPosition.x+3.0*vPosition.z-uLightLineTime)*(vPosition.x+3.0*vPosition.z-uLightLineTime))+uLightLineWidth;
+
+    if(LightLineIndex>0.0){
+      gl_FragColor = mix(gl_FragColor,vec4(1,1,1,1),LightLineIndex/uLightLineWidth);
+    }
+    
+    // #end#
+    `
   );
 
   gsap.to(shader.uniforms.uLightLineTime, {
-    value: 1500,
-    duration: 5,
+    value: 2000,
+    duration: 3,
     ease: "none",
     repeat: -1,
   });
 }
 
 export function addToTopLine(shader) {
-  //   扩散的时间
-  shader.uniforms.uToTopTime = { value: 0 };
-  //   设置条带的宽度
-  shader.uniforms.uToTopWidth = { value: 40 };
-
+  shader.uniforms.uToTopLineWidth = {
+    value: 40,
+  };
+  shader.uniforms.uToTopLineTime = {
+    value: -100,
+  };
+  // 将uniform添加至片元着色器
   shader.fragmentShader = shader.fragmentShader.replace(
     "#include <common>",
     `
-          #include <common>
-    
-          
-          uniform float uToTopTime;
-          uniform float uToTopWidth;
-          `
-  );
-
-  shader.fragmentShader = shader.fragmentShader.replace(
-    "//#end#",
+    #include <common>
+    uniform float uToTopLineWidth;
+    uniform float uToTopLineTime;
     `
-        float ToTopMix = -(vPosition.y-uToTopTime)*(vPosition.y-uToTopTime)+uToTopWidth;
+  );
+  shader.fragmentShader = shader.fragmentShader.replace(
+    "// #end#",
+    `
     
-        if(ToTopMix>0.0){
-            gl_FragColor = mix(gl_FragColor,vec4(0.8,0.8,1,1),ToTopMix /uToTopWidth);
-            
-        }
+
+    float ToTopLineIndex = -((vPosition.y-uToTopLineTime)*(vPosition.y-uToTopLineTime))+uToTopLineWidth;
+
+    if(ToTopLineIndex>0.0){
+      gl_FragColor = mix(gl_FragColor,vec4(1,1,1,1),ToTopLineIndex/uToTopLineWidth);
+    }
     
-        //#end#
-        `
+    // #end#
+    `
   );
 
-  gsap.to(shader.uniforms.uToTopTime, {
-    value: 500,
+  gsap.to(shader.uniforms.uToTopLineTime, {
+    value: 200,
     duration: 3,
     ease: "none",
     repeat: -1,

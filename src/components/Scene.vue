@@ -1,58 +1,44 @@
 <template>
-  <div>
-    <div class="scene" ref="sceneDiv"></div>
-  </div>
+  <div class="scene" ref="sceneDiv"></div>
 </template>
 
 <script setup>
-// import testVertex from "@/shader/test/Vertex.glsl";
 import { onMounted, ref } from "vue";
 
-// 初始化调整屏幕
-import "@/three/init";
-
+// 导入gui对象
 // 导入场景
 import scene from "@/three/scene";
 
-// 导入相机
-import camera from "@/three/camera";
-
-// 导入gui
-
-import gui from "@/three/gui";
-
+import cameraModule from "@/three/camera";
+// 导入控制器
+// 导入辅助坐标轴
+import axesHelper from "@/three/axesHelper";
 // 导入渲染器
 import renderer from "@/three/renderer";
+// 初始化调整屏幕
+import "@/three/init";
+// 导入添加物体函数
+import createMesh from "@/three/createMesh";
 
-// 导入控制器
-// import controls from "@/three/controls";
-
-// 导入坐标轴
-
-import axesHelper from "@/three/axesHelper";
-
-// 每一帧的执行函数
-
+// 导入每一帧的执行函数
 import animate from "@/three/animate";
 
-import createMesh from "@/three/createMesh";
-console.log(gui);
-// 场景元素 div
+// 场景元素div
 let sceneDiv = ref(null);
-// 设置相机位置
-// object3d具有position，属性是1个3维的向量
-camera.position.set(0, 0, 10);
-scene.add(camera);
-// 加入辅助轴，帮助我们查看3维坐标轴
+// 添加相机
+scene.add(cameraModule.activeCamera);
+// 添加辅助坐标轴
 scene.add(axesHelper);
-
 // 创建物体
 createMesh();
 
+// 创建事件的问题
+// const props = defineProps(["eventList"]);
+
+// let arrEventMesh = [];
+
 onMounted(() => {
   sceneDiv.value.appendChild(renderer.domElement);
-  // 渲染对象
-  // 相机设置
   animate();
 });
 </script>
@@ -62,7 +48,7 @@ export default {
   name: "MySceneComponent", // Changed from "Scene" to "MySceneComponent"
 };
 </script>
-<style scoped>
+<style>
 .scene {
   width: 100vw;
   height: 100vh;
